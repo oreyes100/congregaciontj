@@ -161,12 +161,12 @@ export default function TerritoriesPage() {
   };
 
   return (
-    <div className="flex flex-col md:flex-row h-screen bg-slate-50 dark:bg-gray-900 dark:text-gray-100 text-sm pb-[52px] md:pb-0">
+    <div className="flex flex-col md:flex-row h-screen h-[100dvh] bg-slate-50 dark:bg-gray-900 dark:text-gray-100 text-sm pb-[52px] md:pb-0 overflow-hidden">
       <IconSidebar />
       <SyncStatus />
 
       {/* Panel izquierdo: lista + edición */}
-      <div className="w-full md:w-80 max-h-[45vh] md:max-h-none flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col">
+      <div className="w-full md:w-80 h-auto md:h-full max-h-[45vh] md:max-h-none flex-shrink-0 border-b md:border-b-0 md:border-r border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col min-h-0">
         <div className="px-4 py-3 border-b border-slate-200 dark:border-gray-700 flex items-center justify-between gap-2">
           <h1 className="font-bold text-slate-800 dark:text-gray-100 flex items-center gap-2"><MapPin size={18} className="text-sky-600" /> Territorios</h1>
           <div className="flex gap-1.5">
@@ -305,7 +305,7 @@ export default function TerritoriesPage() {
       </div>
 
       {/* Mapa */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative w-full h-full min-h-0 min-w-0">
         <TerritoryMap
           territories={territories}
           selectedId={selectedId}
