@@ -80,3 +80,6 @@ data/
 # PM2 config real (contiene secretos de producción)
 ecosystem.config.cjs
 ecosystem.config.cjs.bak.*
+
+# DB backups locales del VPS
+backups/
