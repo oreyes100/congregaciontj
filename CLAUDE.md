@@ -49,7 +49,6 @@ src/
 Este proyecto está anidado dentro del vault Obsidian (`../` desde esta carpeta). Cargar JIT — nunca releer `Wiki/` completo (614+ notas), solo lo listado abajo:
 - Governance base: `../Meta/CLAUDE.md`, `../Meta/core-invariants.md`
 - Índice de drivers disponibles: `../Meta/METHODOLOGIES_INDEX.md`
-- Blueprint específico de este proyecto (gap NWS Desktop vs MSP + drivers recomendados): `../Meta/BLUEPRINTS/BLUEPRINT_NWS_TO_MSP_MIGRATION.md`
 - **Driver activo para features que replican NWS Desktop**: SDD (Spec Driven Development) — extraer spec real de `../New World Scheduler/ProgramData/A/*.json` antes de codear; nunca adivinar comportamiento legacy.
 - Persistent Context y Plan First ya están activos de facto (`.claude/memory/`, invariante >3 archivos abajo) — no requieren nueva configuración.
 

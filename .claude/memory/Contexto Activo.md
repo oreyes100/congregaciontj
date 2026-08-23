@@ -54,3 +54,8 @@ Informes Predicación 3 pestañas estilo S-1 + filtro grupo. Detalle comprimido 
 
 ---
 *Actualizado: 2026-08-23*
+
+### Sincronización noche 2026-08-23
+- **GitHub `meeting-scheduler-pro`**: push `682ef28..aac69d8` (export CSV de transacciones + sección Cuentas en /backup + filenames por sección) — rescatado del VPS vía git bundle; ya no se pierde con deploy-msp.sh
+- **Lab repo `meeting-scheduler-pro-vps`**: commit `fe03076` — port de esos cambios + restore atómico FK off + db.ts helpers + stubs congregations. Lab `.250` realineado a origin (build EXIT=0, verificado: CSV export 80 filas reales, ZIP multisección OK)
+- 🔴 Seguridad: export CSV de cuentas_config trae `ai_api_key` plano → rotar/enmascarar

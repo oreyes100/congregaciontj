@@ -168,3 +168,22 @@ incluye o hace falta portarlos.
 
 ---
 *Documento generado desde la sesión real de diagnóstico — mantener actualizado.*
+
+---
+
+## 8. SINCRONIZACIÓN 2026-08-23 (noche) — Export de Cuentas + GitHub al día
+
+| Acción | Resultado |
+|---|---|
+| Commits `61663b0` + `aac69d8` (export CSV, sección Cuentas en /backup, etiqueta v2, filenames) rescatados del VPS vía `git bundle` | ✅ **Push a `meeting-scheduler-pro@vps-selfhosted`** (`682ef28..aac69d8`) — ya no se pierden con deploy-msp.sh |
+| Port de esos cambios + fixes FK/restore atómico al LAB (`meeting-scheduler-pro-vps`) | ✅ Commit **`fe03076`** pushado; lab `.250` realineado (`reset --hard`, build EXIT=0, reload PM2) |
+| Verificación funcional en lab (micongre.duckdns.org) | `/api/cuentas/transactions?format=csv` → CSV completo (filename `cuentas-transacciones-<fecha>.csv`, 80 filas reales incl. aprobadas por Telegram) · `/api/backup?sections=cuentas&format=csv` → **ZIP multisección** · label "Cuentas v2 (Contabilidad)" compilado |
+
+### Riesgos/pendientes heredados de la sesión de producción
+1. 🔴 **Seguridad**: el export CSV de `cuentas_config` incluye `ai_api_key` en plano → rotar la key si sale del entorno; considerar enmascarar en exports futuros.
+2. 🟡 Cron del VPS de producción referencia `backup.sh` y `healthcheck.py` que **no existen** (errores diarios) → recrear o quitar entradas.
+3. 🟡 Fix `auto-assign-service.js`: confirmar si ya está en GitHub `meeting-scheduler-pro` (commit `1d9af13` existe en congregaciontj; verificar en meeting-scheduler-pro).
+
+> Nota de naming: `micongre.duckdns.org` apunta al LAB (.250:3010); el despliegue
+> por panel de la VM 211 usa `micongre.capuvps.duckdns.org`. Producción principal
+> sigue siendo `congregaciontj.duckdns.org`.

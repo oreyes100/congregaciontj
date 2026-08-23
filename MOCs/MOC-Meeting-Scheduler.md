@@ -24,9 +24,9 @@ Mapa de contenido del proyecto. Navegación temática entre Wiki y código fuent
 - `src/app/territories/` — Mapa Leaflet con polígonos
 
 ## Memoria del Proyecto
-- `.claude/memory/CONTEXTO.md` — Estado activo sesión a sesión
+- `.claude/memory/MEMORY.md` — Índice de la memoria
+- `.claude/memory/Contexto Activo.md` — Estado activo sesión a sesión
 - `.claude/memory/Decision Journal.md` — Decisiones arquitectónicas cerradas
-- `.claude/memory/learned-rules.md` — Reglas aprendidas
 - `.claude/memory/sessions.jsonl` — Historial de sesiones
 
 ## Metodologías Activas

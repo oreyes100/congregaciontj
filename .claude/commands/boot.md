@@ -10,7 +10,7 @@ Lee el archivo `.claude/memory/Contexto Activo.md` y responde en este formato ex
 Estado: [últimas 3 tareas completadas o en curso — máx 1 línea cada una]
 Bugs conocidos: [bugs del Contexto Activo — solo los abiertos]
 Próximo paso: [acción concreta según "Próximos Pasos — Prioridad"]
-Stack: Next.js + Supabase + Vercel | Puerto dev: 3099
+Stack: Next.js + Supabase | Puerto dev: 3000
 ```
 
 Luego pregunta: "¿Continuamos con [próximo paso] o tienes otra prioridad?"
