@@ -168,3 +168,36 @@ body {
 .animate-pulse-subtle {
   animation: pulse-subtle 2s ease-in-out infinite;
 }
+
+/* =====================================================================
+   TOUCH DEVICES — iPhone / iPad / Android
+   Las clases las aplica el script inline touchInitScript (src/lib/touch.ts)
+   en <head>, antes del primer paint. Escritorio con mouse: sin clases,
+   cero cambios.
+   ===================================================================== */
+html.touch-device body {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Feedback táctil: el hover no existe en touch → respuesta al presionar */
+html.touch-device button:active,
+html.touch-device [role="button"]:active {
+  opacity: .72;
+}
+html.touch-device a:active {
+  opacity: .8;
+}
+
+/* Inputs ≥16px: evita el auto-zoom de iOS Safari al enfocar */
+html.touch-device input:not([type="checkbox"]):not([type="radio"]),
+html.touch-device select,
+html.touch-device textarea {
+  font-size: 16px !important;
+  line-height: 1.4;
+}
+
+/* background-attachment: fixed está roto en iOS/iPadOS (scroll/render) */
+html.ios * {
+  background-attachment: scroll !important;
+}

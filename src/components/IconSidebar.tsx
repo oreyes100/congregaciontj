@@ -70,11 +70,11 @@ export function IconSidebar() {
           cuántos módulos tenga la barra inferior ni el scroll horizontal. */}
       <div className="md:hidden fixed z-50 flex gap-1.5" style={{ top: 'calc(env(safe-area-inset-top, 0px) + 8px)', right: 8 }}>
         <button onClick={() => setMode(isDark ? 'light' : 'dark')} title="Tema"
-          className="p-2 rounded-full bg-black/40 backdrop-blur text-white shadow-lg">
+          className="p-2.5 rounded-full bg-black/40 backdrop-blur text-white shadow-lg">
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
         <button onClick={logout} title="Cerrar sesión"
-          className="p-2 rounded-full bg-black/40 backdrop-blur text-white shadow-lg">
+          className="p-2.5 rounded-full bg-black/40 backdrop-blur text-white shadow-lg">
           <LogOut size={16} />
         </button>
       </div>
@@ -85,7 +85,7 @@ export function IconSidebar() {
           md:static md:h-auto md:px-0 md:overflow-x-visible md:overflow-y-auto`}
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <button onClick={() => router.push('/')} title="Inicio"
-          className="p-2 rounded-md text-white hover:bg-sky-600 transition-colors shrink-0">
+          className="max-md:p-2.5 p-2 rounded-md text-white hover:bg-sky-600 transition-colors shrink-0">
           <LayoutGrid size={22} />
         </button>
         {visible.map(({ key, path, Icon, title }) => {
@@ -93,7 +93,7 @@ export function IconSidebar() {
           const badge = key === 'my-assignments' && assignmentBadge > 0 ? assignmentBadge : 0;
           return (
             <button key={key} onClick={() => router.push(path)} title={title}
-              className={`relative p-2 rounded-md text-white transition-colors shrink-0 ${active ? 'bg-sky-600 shadow-inner' : 'hover:bg-sky-600'}`}>
+              className={`relative max-md:p-2.5 p-2 rounded-md text-white transition-colors shrink-0 ${active ? 'bg-sky-600 shadow-inner' : 'hover:bg-sky-600'}`}>
               <Icon size={22} />
               {badge > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
