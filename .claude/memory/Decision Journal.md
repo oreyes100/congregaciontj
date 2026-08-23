@@ -97,3 +97,27 @@ Registro de decisiones arquitectónicas cerradas. No proponer alternativas a est
 **Estado**: CERRADO (estructura). Commit pendiente de confirmación explícita.
 
 ---
+
+## [2026-08-23] Topología: runtime en meeting-scheduler-pro-vps, infra-docs en congregaciontj
+
+**Contexto**: Existen dos repos hermanos. El código runtime activo (módulo Cuentas + agente Telegram) vive en `oreyes100/meeting-scheduler-pro-vps` rama `vps-selfhosted`; este repo no los tiene. Se añadió aquí `.github/workflows/deploy.yml` (dispara con `vps-selfhosted`, rama que no existe en este repo → inerte) y `PROCEDIMIENTO_CONEXION_VPS_Y_PRODUCCION.md`.
+
+**Decisión**: Mantener separación. Runtime/despliegue real = meeting-scheduler-pro-vps (`/opt/msp`); este repo = base de conocimiento de infraestructura. Lab `vps-demo-n2` corre MSP en puerto **3010** (3000 ocupado por mis-finanzas) con auto-deploy cron cada 15 min.
+
+**Por qué**: Portar Cuentas+Telegram a este repo implicaría reconciliar dos lineages divergentes sin ganancia funcional; el workflow inerte se documenta para no confundir.
+
+**Alternativa descartada**: Unificar todo en congregaciontj — alto costo de migración, riesgo de romper producción actual (VPS cloud ya corre desde meeting-scheduler-pro-vps).
+
+**Estado**: CERRADO. Reabrir solo si Jorge pide explícitamente la unificación.
+
+## [2026-08-23-b] CORRECCIÓN topología: producción = meeting-scheduler-pro en VM211 (no vps-demo-n2 ni -vps)
+
+**Contexto**: La entrada [2026-08-23] anterior asumía que el runtime de producción era `meeting-scheduler-pro-vps`. La sesión real sobre el VPS de producción reveló la arquitectura verdadera: producción = VM 211 "micongre" (192.168.6.136, VLAN6), repo **`oreyes100/meeting-scheduler-pro`** rama `vps-selfhosted`, `/opt/msp` vía PM2:3000 + nginx:80, expuesto por NAT 8211 del bastión pve. El lab (`vps-demo-n2`, :3010, micongre.duckdns.org) sí usa `meeting-scheduler-pro-vps`.
+
+**Decisión**: Documentar la topología real en `PROCEDIMIENTO_CONEXION_VPS_Y_PRODUCCION.md` (reescribido como KB completa). La entrada anterior queda vigente SOLO para el alcance lab.
+
+**Por qué**: Existían DOS versiones de Cuentas sin visibilidad (iframe Vercel oculto + nativa ausente del build) porque `/opt/msp` tenía clonado el repo equivocado; un build in-place pisó producción con código viejo. Sin el mapa correcto de repos↔servidores cualquier deploy repetía el incidente.
+
+**Alternativa descartada**: Unificar los tres repos — requiere migración deliberada; hoy conviven con responsabilidades claras (producción / lab+experimentos / legacy+docs).
+
+**Estado**: CERRADO para documentación. Pendientes operativos heredados: fix auto-assign-service.js solo vive en VPS de producción (subir a GitHub), diagnóstico proxy :80/docker nginx desaparecido, web 443→6.152 caída.
