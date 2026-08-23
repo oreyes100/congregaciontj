@@ -187,3 +187,17 @@ incluye o hace falta portarlos.
 > Nota de naming: `micongre.duckdns.org` apunta al LAB (.250:3010); el despliegue
 > por panel de la VM 211 usa `micongre.capuvps.duckdns.org`. Producción principal
 > sigue siendo `congregaciontj.duckdns.org`.
+
+---
+
+## 9. CIERRE 2026-08-23 — auto-assign blindado + cron reparado
+
+| Acción | Resultado |
+|---|---|
+| Fix `auto-assign-service.js` (54+/157−) commiteado EN EL VPS como `d9bc196` | ✅ fin del "cambio local sin commit" |
+| Bundle `origin/vps-selfhosted..HEAD` → push a GitHub vía Mac | ✅ `aac69d8..d9bc196` en meeting-scheduler-pro@vps-selfhosted |
+| `/opt/msp/backup.sh` creado (better-sqlite3 .backup() diario 3am + prune 14 días) | ✅ probado: `backups/msp-2026-08-23.db` (1 MB) |
+| `/opt/msp/healthcheck.py` creado (urllib health :3000, exit≠0 si falla; cron cada 15 min) | ✅ probado: OK |
+| Estado crontab producción | ✅ 3 entradas todas funcionales (backup 3am · healthcheck 15min · notificaciones territorio 9am) |
+
+**Pendiente vigente único**: rotar/enmascarar `ai_api_key` que sale en exports CSV de `cuentas_config`.
