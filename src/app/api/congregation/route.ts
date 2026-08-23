@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 const ALLOWED = [
   'name', 'number', 'congregation_id', 'language', 'time_zone',
@@ -29,16 +29,14 @@ async function syncFieldServiceGroupCount(supabase: any, count: number) {
   if (toInsert.length) await supabase.from('field_service_groups').insert(toInsert);
 }
 
-// TODO: congregation_settings table needs congregation_id column before filtering can be applied
 export async function GET() {
   try {
-    await getSessionContext();
-    const { data, error } = await sb()
-      .from('congregation_settings')
-      .select('*')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
+    const client = sb();
+    let query = client.from('congregation_settings').select('*').order('created_at', { ascending: true }).limit(1);
+    if (ctx.congreId) query = query.eq('owning_congregation_id', ctx.congreId);
+    const { data, error } = await query.maybeSingle();
     if (error) throw error;
     return NextResponse.json({ congregation: data || null });
   } catch (e: unknown) {
@@ -51,24 +49,22 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     const body = await request.json();
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     for (const k of ALLOWED) if (k in body) updates[k] = body[k];
 
-    const { data: existing } = await supabase
-      .from('congregation_settings')
-      .select('id')
-      .order('created_at', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+    let q = supabase.from('congregation_settings').select('id').order('created_at', { ascending: true }).limit(1);
+    if (ctx.congreId) q = q.eq('owning_congregation_id', ctx.congreId);
+    const { data: existing } = await q.maybeSingle();
 
     if (existing) {
       const { data, error } = await supabase
         .from('congregation_settings')
         .update(updates)
-        .eq('id', existing.id)
+        .eq('id', (existing as { id: string }).id)
         .select()
         .single();
       if (error) throw error;
@@ -76,6 +72,7 @@ export async function PUT(request: Request) {
       return NextResponse.json({ congregation: data });
     }
 
+    if (ctx.congreId) updates.owning_congregation_id = ctx.congreId;
     const { data, error } = await supabase
       .from('congregation_settings')
       .insert(updates)

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import { sb } from '@/lib/crud';
 
 export async function GET() {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
 
     // Try with congregation_id (post-migration); fall back if column doesn't exist yet
     let query = sb()

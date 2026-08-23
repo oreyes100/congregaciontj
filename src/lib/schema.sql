@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS public_talk_outlines (
   id         text PRIMARY KEY,
   number     integer NOT NULL,
   title      text NOT NULL,
+  theme      text,
   created_at text DEFAULT (datetime('now')),
   updated_at text DEFAULT (datetime('now')),
   UNIQUE(number)
@@ -223,7 +224,7 @@ CREATE TABLE IF NOT EXISTS weekend_meetings (
   updated_at           text DEFAULT (datetime('now')),
   cleaning_group       text,
   congregation_id      text REFERENCES congregations(id),
-  UNIQUE(date)
+  UNIQUE(date, congregation_id)
 );
 
 -- ─── 10. PUBLIC TALK HISTORY (→ public_talk_outlines) ────────────────────────
@@ -490,6 +491,19 @@ CREATE TABLE IF NOT EXISTS field_service_reports (
 CREATE INDEX IF NOT EXISTS idx_fsr_month ON field_service_reports(month);
 CREATE INDEX IF NOT EXISTS idx_fsr_user  ON field_service_reports(user_id);
 
+-- ─── congregation_id indexes (performance) ───────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_users_congre          ON users(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_meetings_congre       ON meetings(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_weekend_congre        ON weekend_meetings(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_territories_congre    ON territories(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_fsr_congre            ON field_service_reports(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_congre     ON meeting_attendance(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_pspeakers_congre      ON public_speakers(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_outgoing_congre       ON outgoing_talks(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_congre          ON congregation_tasks(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_maintenance_congre    ON maintenance_tasks(congregation_id);
+CREATE INDEX IF NOT EXISTS idx_events_congre         ON congregation_events(congregation_id);
+
 -- ─── 28. MEETING ATTENDANCE (→ congregations) ───────────────────────────────
 CREATE TABLE IF NOT EXISTS meeting_attendance (
   id              text PRIMARY KEY,
@@ -502,3 +516,58 @@ CREATE TABLE IF NOT EXISTS meeting_attendance (
   congregation_id text REFERENCES congregations(id),
   UNIQUE(meeting_date, meeting_type, congregation_id)
 );
+
+-- ─── 29. TERRITORY ASSIGNMENTS (history for S-13 report) ────────────────────
+CREATE TABLE IF NOT EXISTS territory_assignments (
+  id             text PRIMARY KEY,
+  territory_id   text NOT NULL REFERENCES territories(id) ON DELETE CASCADE,
+  assigned_name  text NOT NULL,
+  assigned_date  text,
+  completed_date text,
+  created_at     text DEFAULT (datetime('now')),
+  congregation_id text REFERENCES congregations(id)
+);
+CREATE INDEX IF NOT EXISTS idx_ta_territory ON territory_assignments(territory_id);
+CREATE INDEX IF NOT EXISTS idx_ta_congre    ON territory_assignments(congregation_id);
+
+-- ─── 30. TERRITORY EXTRAS (pairs, completion stats) ─────────────────────────
+-- Columns are also added at runtime in sqlite.ts for existing databases.
+
+-- ─── 31. WHATSAPP / MESSAGING CONFIG (per congregation) ─────────────────────
+CREATE TABLE IF NOT EXISTS messaging_settings (
+  congregation_id  text PRIMARY KEY REFERENCES congregations(id),
+  whatsapp_enabled integer NOT NULL DEFAULT 0,
+  provider         text NOT NULL DEFAULT 'cloud',   -- 'cloud' = WhatsApp Cloud API
+  phone_number_id  text,
+  access_token     text,
+  sender_label     text,
+  notify_on_assign     integer NOT NULL DEFAULT 1,
+  notify_overdue       integer NOT NULL DEFAULT 1,
+  overdue_days         integer NOT NULL DEFAULT 7,
+  notify_weekly_status integer NOT NULL DEFAULT 1,
+  weekly_status_dow    integer NOT NULL DEFAULT 1,  -- 0=Sun … 6=Sat
+  template_assign  text,
+  template_overdue text,
+  template_weekly  text,
+  updated_at       text DEFAULT (datetime('now'))
+);
+
+-- ─── 32. OUTBOUND MESSAGES (platform inbox + whatsapp delivery log) ─────────
+CREATE TABLE IF NOT EXISTS messages (
+  id              text PRIMARY KEY,
+  user_id         text REFERENCES users(id) ON DELETE CASCADE,
+  kind            text NOT NULL,            -- territory_assigned | territory_overdue | territory_weekly
+  title           text NOT NULL,
+  body            text NOT NULL,
+  image_data      text,                     -- data: URI snapshot of the territory
+  territory_id    text REFERENCES territories(id) ON DELETE CASCADE,
+  read_at         text,
+  whatsapp_status text,                     -- sent | failed | skipped | disabled
+  whatsapp_error  text,
+  dedupe_key      text,
+  created_at      text DEFAULT (datetime('now')),
+  congregation_id text REFERENCES congregations(id)
+);
+CREATE INDEX IF NOT EXISTS idx_msg_user   ON messages(user_id, read_at);
+CREATE INDEX IF NOT EXISTS idx_msg_congre ON messages(congregation_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_msg_dedupe ON messages(dedupe_key) WHERE dedupe_key IS NOT NULL;

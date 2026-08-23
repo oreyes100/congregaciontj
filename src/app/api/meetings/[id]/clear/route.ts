@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 export async function POST(
   request: NextRequest,
@@ -8,6 +8,7 @@ export async function POST(
 ) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id: meetingId } = await params;
     const supabase = sb();
 

@@ -41,7 +41,7 @@ export function IconSidebar() {
       .catch(() => {});
   }, [me?.authenticated]);
 
-  const visible = MODULES.filter(m => canAccess(me, m.key, m.adminOnly));
+  const visible = MODULES.filter(m => canAccess(me, m.key, m.adminOnly, m.superAdminOnly));
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -50,7 +50,7 @@ export function IconSidebar() {
 
   // Gate: si el módulo actual no está permitido, redirigir al primero visible
   const current = moduleByPath(pathname);
-  const blocked = !!me && !!current && !canAccess(me, current.key, current.adminOnly);
+  const blocked = !!me && !!current && !canAccess(me, current.key, current.adminOnly, current.superAdminOnly);
   useEffect(() => {
     if (blocked) router.replace(visible[0]?.path || '/my-report');
     // eslint-disable-next-line react-hooks/exhaustive-deps

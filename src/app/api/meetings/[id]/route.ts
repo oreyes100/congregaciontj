@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 export async function GET(
   request: NextRequest,
@@ -8,6 +8,7 @@ export async function GET(
 ) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await params;
     const supabase = sb();
 
@@ -65,6 +66,7 @@ export async function PUT(
 ) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await params;
     const supabase = sb();
     const body = await request.json();
@@ -146,6 +148,7 @@ export async function DELETE(
 ) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await params;
     const supabase = sb();
 

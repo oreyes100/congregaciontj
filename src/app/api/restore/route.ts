@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
 import { ALL_TABLES, primaryKeyOf } from '@/lib/backupSections';
 import { parseCsv } from '@/lib/csv';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 const CHUNK_SIZE = 500;
 
@@ -64,6 +64,7 @@ async function writeTable(table: string, rows: Record<string, unknown>[], mode: 
 export async function POST(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const congreId = ctx.congreId && !ctx.isSuperAdmin ? ctx.congreId : null;
 
     const form = await request.formData();

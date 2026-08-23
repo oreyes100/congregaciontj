@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 const PERSON_FIELDS = `
   id,
@@ -23,6 +23,7 @@ const PERSON_FIELDS = `
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
     try {
@@ -53,6 +54,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
     const body = await request.json();
@@ -173,6 +175,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
 

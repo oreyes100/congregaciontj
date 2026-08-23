@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 // TODO: public_talk_outlines table needs congregation_id column before filtering can be applied
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
     const body = await request.json();
@@ -30,7 +31,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
 

@@ -1,10 +1,150 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Building2, Plus, Check, X, ChevronLeft, Users, ToggleLeft, ToggleRight, Trash2, UserPlus, Copy, Eye, EyeOff } from 'lucide-react';
+import { Building2, Plus, Check, X, ChevronLeft, Users, ToggleLeft, ToggleRight, Trash2, UserPlus, Copy, Eye, EyeOff, Cpu, HardDrive, RefreshCw, GitBranch } from 'lucide-react';
 import { useMe } from '@/lib/useMe';
 import { MODULES } from '@/lib/modules';
+
+// ── Types ────────────────────────────────────────────────────────────────────
+interface SystemStats {
+  ts: number;
+  mem: { totalKb: number; availableKb: number; usedPct: number };
+  disk: { totalKb: number; usedKb: number; usedPct: number };
+  load: number[];
+  dbBytes: number;
+  lastBackup: string | null;
+  uptimeSec: number;
+}
+interface ReplicationInfo {
+  localSha: string;
+  remoteSha: string | null;
+  inSync: boolean | null;
+}
+
+// ── ResourceMeter ─────────────────────────────────────────────────────────────
+function Bar({ pct, label }: { pct: number; label: string }) {
+  const color = pct >= 85 ? 'bg-red-500' : pct >= 70 ? 'bg-amber-400' : 'bg-green-500';
+  return (
+    <div>
+      <div className="flex justify-between text-xs text-gray-400 mb-1">
+        <span>{label}</span><span>{pct}%</span>
+      </div>
+      <div className="h-2 rounded-full bg-gray-700 overflow-hidden">
+        <div className={`h-full rounded-full transition-all duration-500 ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function fmtBytes(b: number) {
+  if (b === 0) return '—';
+  if (b >= 1073741824) return `${(b / 1073741824).toFixed(1)} GB`;
+  if (b >= 1048576) return `${(b / 1048576).toFixed(1)} MB`;
+  return `${Math.round(b / 1024)} KB`;
+}
+
+function fmtUptime(s: number) {
+  if (s < 60) return `${s}s`;
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  return `${Math.floor(s / 3600)}h ${Math.floor((s % 3600) / 60)}m`;
+}
+
+function ResourceMeter() {
+  const [stats, setStats] = useState<SystemStats | null>(null);
+  const [err, setErr] = useState(false);
+
+  const poll = useCallback(async () => {
+    if (document.hidden) return;
+    try {
+      const r = await fetch('/api/super-admin/system');
+      if (r.ok) { setStats(await r.json()); setErr(false); }
+      else setErr(true);
+    } catch { setErr(true); }
+  }, []);
+
+  useEffect(() => {
+    poll();
+    const id = setInterval(poll, 5000);
+    const onVis = () => { if (!document.hidden) poll(); };
+    document.addEventListener('visibilitychange', onVis);
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
+  }, [poll]);
+
+  if (err) return <p className="text-xs text-red-400">Error al cargar métricas del sistema.</p>;
+  if (!stats) return <p className="text-xs text-gray-500 animate-pulse">Cargando métricas…</p>;
+
+  const load1 = stats.load[0] ?? 0;
+  const loadColor = load1 > 2 ? 'text-red-400' : load1 > 1 ? 'text-amber-400' : 'text-green-400';
+
+  return (
+    <div className="space-y-3">
+      <Bar pct={stats.mem.usedPct} label="RAM" />
+      <Bar pct={stats.disk.usedPct} label="Disco /" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div className="p-2.5 rounded-lg bg-gray-800">
+          <p className="text-gray-400 mb-0.5">Load avg</p>
+          <p className={`font-mono font-semibold ${loadColor}`}>{load1.toFixed(2)}</p>
+        </div>
+        <div className="p-2.5 rounded-lg bg-gray-800">
+          <p className="text-gray-400 mb-0.5">DB</p>
+          <p className="font-mono font-semibold text-gray-200">{fmtBytes(stats.dbBytes)}</p>
+        </div>
+        <div className="p-2.5 rounded-lg bg-gray-800">
+          <p className="text-gray-400 mb-0.5">Uptime</p>
+          <p className="font-mono font-semibold text-gray-200">{fmtUptime(stats.uptimeSec)}</p>
+        </div>
+        <div className="p-2.5 rounded-lg bg-gray-800">
+          <p className="text-gray-400 mb-0.5">Último backup</p>
+          <p className="font-mono text-[10px] text-gray-300 truncate">{stats.lastBackup ? stats.lastBackup.split('/').pop() : '—'}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── ReplicationBadge ──────────────────────────────────────────────────────────
+function ReplicationBadge() {
+  const [info, setInfo] = useState<ReplicationInfo | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const check = async () => {
+    setLoading(true); setErr(null);
+    try {
+      const r = await fetch('/api/super-admin/replication');
+      if (r.ok) setInfo(await r.json());
+      else setErr((await r.json()).error || 'Error');
+    } catch { setErr('Sin conexión'); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-3">
+      <button onClick={check} disabled={loading}
+        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 disabled:opacity-50">
+        <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
+        Verificar
+      </button>
+      {info && (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="font-mono text-gray-400">local: {info.localSha.slice(0, 7)}</span>
+          {info.remoteSha
+            ? <span className="font-mono text-gray-400">remoto: {info.remoteSha.slice(0, 7)}</span>
+            : <span className="text-gray-500">remoto: —</span>}
+          {info.inSync === true && <span className="px-2 py-0.5 rounded-full bg-green-900/60 text-green-300 border border-green-700">✓ Sincronizado</span>}
+          {info.inSync === false && <span className="px-2 py-0.5 rounded-full bg-amber-900/60 text-amber-300 border border-amber-700">⚠ Desactualizado</span>}
+          {info.inSync === null && <span className="px-2 py-0.5 rounded-full bg-gray-700 text-gray-400">Sin acceso remoto</span>}
+        </div>
+      )}
+      {err && <span className="text-xs text-red-400">{err}</span>}
+      <button disabled title="Requiere deploy key — pendiente"
+        className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-600 cursor-not-allowed border border-gray-700">
+        Actualizar desde GitHub
+      </button>
+    </div>
+  );
+}
 
 interface Congregation {
   id: string;
@@ -149,6 +289,23 @@ export default function SuperAdminPage() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 pb-20 space-y-6">
+        {/* ── MÉTRICAS DEL SISTEMA ── */}
+        <section className="p-4 rounded-xl border border-gray-700 bg-gray-800/50">
+          <h2 className="font-bold text-base flex items-center gap-2 mb-4">
+            <Cpu size={16} className="text-violet-400" /> Recursos del sistema
+          </h2>
+          <ResourceMeter />
+        </section>
+
+        {/* ── REPLICACIÓN GITHUB ── */}
+        <section className="p-4 rounded-xl border border-gray-700 bg-gray-800/50">
+          <h2 className="font-bold text-base flex items-center gap-2 mb-3">
+            <GitBranch size={16} className="text-violet-400" /> Replicación GitHub
+            <span className="ml-1 text-xs font-normal text-gray-500">(oreyes100/micogre)</span>
+          </h2>
+          <ReplicationBadge />
+        </section>
+
         {error && (
           <div className="p-3 rounded-lg bg-red-900/40 border border-red-700 text-red-300 text-sm flex items-center gap-2">
             <X size={14} /> {error}

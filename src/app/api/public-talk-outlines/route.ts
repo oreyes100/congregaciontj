@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 // TODO: public_talk_outlines table needs congregation_id column before filtering can be applied
 export async function GET() {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
 
     const { data: outlines, error } = await supabase
@@ -41,7 +42,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const body = await request.json();
     const { number, title } = body;
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
 import { getDb } from '@/lib/sqlite';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 function joinAssignment(row: Record<string, unknown>) {
   const { u_id, u_first_name, u_last_name, u_name, s_id, s_location_id, s_day_of_week, s_start_time, s_end_time, s_persons_needed, ...rest } = row;
@@ -14,7 +14,8 @@ function joinAssignment(row: Record<string, unknown>) {
 
 export async function GET(request: Request) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { searchParams } = new URL(request.url);
     const weekDate = searchParams.get('week');
     const db = getDb();
@@ -39,7 +40,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const body = await request.json();
     const id = crypto.randomUUID();
     const { error } = await sb().from('pw_assignments').insert({ id, shift_id: body.shift_id, week_date: body.week_date, user_id: body.user_id });
@@ -56,7 +58,8 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });

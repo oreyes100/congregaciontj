@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import { sb } from '@/lib/crud';
 
 export async function GET() {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     let query = sb().from('congregation_events').select('*').order('start_date', { ascending: true });
     if (ctx.congreId) query = query.eq('congregation_id', ctx.congreId);
     const { data, error } = await query;
@@ -18,6 +19,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const body = await request.json();
     const { data, error } = await sb()
       .from('congregation_events')

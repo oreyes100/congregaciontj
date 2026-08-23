@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import { getProgram, type ProgramPart } from '@/lib/programs';
 
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
     const body = await request.json().catch(() => ({}));

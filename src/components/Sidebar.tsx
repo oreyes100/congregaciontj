@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Printer, ChevronDown, ChevronRight, Plus, Sun, Moon, Monitor } from 'lucide-react';
 import { IconSidebar } from './IconSidebar';
 import { useT } from '@/lib/i18n';
@@ -125,6 +125,27 @@ export function Sidebar({ meetings, activeMeetingId, setActiveMeetingId, onPrint
     setExpandedMonths((prev) => ({ ...prev, [month]: !prev[month] }));
   };
 
+  // With monthsBack > 0 the list opens on the oldest month, burying today under a
+  // year of history. Scroll the current week to the top of the panel instead —
+  // earlier weeks stay reachable by scrolling up, later ones by scrolling down.
+  const currentWeekIso = today ? isoDate(getMondayOf(today)) : null;
+  const currentWeekRef = useRef<HTMLButtonElement | null>(null);
+  const scrollListRef = useRef<HTMLDivElement | null>(null);
+  const hasScrolled = useRef(false);
+
+  useEffect(() => {
+    if (hasScrolled.current || !currentWeekIso) return;
+    // The row only exists once its month is expanded and React has painted it.
+    const frame = requestAnimationFrame(() => {
+      const row = currentWeekRef.current;
+      const list = scrollListRef.current;
+      if (!row || !list) return;
+      list.scrollTop = row.offsetTop - list.offsetTop;
+      hasScrolled.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [currentWeekIso, expandedMonths, calendar]);
+
   const getWeekLabel = (date: Date): string => {
     const iso = date.toISOString().slice(0, 10);
     return formatWeekRange(iso, locale);
@@ -154,7 +175,7 @@ export function Sidebar({ meetings, activeMeetingId, setActiveMeetingId, onPrint
         </div>
 
         {/* Scrollable list of months and weeks */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+        <div ref={scrollListRef} className="flex-1 overflow-y-auto p-2 space-y-1">
           {!today ? (
             <div className="text-gray-500 dark:text-gray-400 dark:text-gray-300 p-2 text-center text-xs">{t('sidebar.loading')}</div>
           ) : calendar.months.length === 0 ? (
@@ -178,11 +199,13 @@ export function Sidebar({ meetings, activeMeetingId, setActiveMeetingId, onPrint
                       const m = week.meeting;
                       const isActive = m && activeMeetingId === m.id;
                       const isPast = date < getMondayOf(today);
+                      const isCurrentWeek = week.isoDate === currentWeekIso;
 
                       if (m) {
                         return (
                           <button
                             key={week.isoDate}
+                            ref={isCurrentWeek ? currentWeekRef : undefined}
                             onClick={() => setActiveMeetingId(m.id)}
                             className={`w-full text-left px-4 py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0 hover:bg-gray-100 dark:hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 transition-colors ${
                               isActive ? 'bg-yellow-200 dark:bg-yellow-800/50 border-yellow-300 font-medium text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'
@@ -199,6 +222,7 @@ export function Sidebar({ meetings, activeMeetingId, setActiveMeetingId, onPrint
                       return (
                         <button
                           key={week.isoDate}
+                          ref={isCurrentWeek ? currentWeekRef : undefined}
                           onClick={() => onNewMeeting(week.isoDate)}
                           disabled={isCreating || blocked}
                           className={`w-full text-left px-4 py-1.5 border-b border-gray-100 dark:border-gray-700 last:border-0 transition-colors flex items-center justify-between group ${

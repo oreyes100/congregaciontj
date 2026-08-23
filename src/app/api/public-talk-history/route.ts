@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import { getDb } from '@/lib/sqlite';
 
 export async function GET() {
   try {
-    await getSessionContext();
+    const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const db = getDb();
     const history = db.prepare(`
       SELECT h.*, o.number AS outline_number, o.title AS outline_title

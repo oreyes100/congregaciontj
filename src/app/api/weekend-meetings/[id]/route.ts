@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 const ALLOWED = [
   'speaker_type', 'local_speaker_id', 'visiting_speaker_id', 'other_speaker_name',
@@ -12,6 +12,7 @@ const ALLOWED = [
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
     const body = await request.json();
@@ -77,6 +78,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 export async function DELETE(_request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const { id } = await context.params;
     const supabase = sb();
     let query = supabase.from('weekend_meetings').delete().eq('id', id);

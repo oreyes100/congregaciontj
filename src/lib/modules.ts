@@ -1,7 +1,7 @@
 import {
   Home, Users, Calendar, BookOpen, Mic, MapPin, Briefcase, Eye,
   ClipboardList, Sparkles, Wrench, GlassWater, Wine, CalendarDays,
-  FileText, CalendarCheck, ShieldCheck, UsersRound, ClipboardCheck, UserCog, Archive, Banknote, Building2, BookMarked, type LucideIcon,
+  FileText, CalendarCheck, ShieldCheck, UsersRound, ClipboardCheck, UserCog, Archive, Banknote, Building2, BookMarked, MessageCircle, Bot, type LucideIcon,
 } from 'lucide-react';
 
 export interface AppModule {
@@ -39,6 +39,8 @@ export const MODULES: AppModule[] = [
   { key: 'my-assignments', path: '/my-assignments', title: 'Mis Asignaciones', description: 'Tus asignaciones futuras en Vida y Ministerio', Icon: BookMarked, publisherDefault: true },
   { key: 'my-report', path: '/my-report', title: 'Mi Informe', description: 'Sube tu informe de predicación', Icon: CalendarCheck, publisherDefault: true },
   { key: 'group-reports', path: '/group-reports', title: 'Informes de mi Grupo', description: 'Captura los informes pendientes de tu grupo de predicación', Icon: UsersRound },
+  { key: 'messaging', path: '/messaging', title: 'Mensajería y WhatsApp', description: 'Avisos de territorios por plataforma y WhatsApp', Icon: MessageCircle, adminOnly: true },
+  { key: 'telegram', path: '/telegram', title: 'Sincronización Telegram', description: 'Publica avisos de territorios en un grupo o canal de Telegram', Icon: Bot, adminOnly: true },
   { key: 'permissions', path: '/permissions', title: 'Privilegios', description: 'Control de acceso por usuario', Icon: ShieldCheck, adminOnly: true },
   { key: 'backup', path: '/backup', title: 'Respaldar y Restaurar', description: 'Exportar/importar la base de datos — puede borrar datos existentes', Icon: Archive, adminOnly: true },
   { key: 'cuentas', path: '/cuentas', title: 'Cuentas', description: 'Contabilidad de la congregación (S-26, S-30)', Icon: Banknote },

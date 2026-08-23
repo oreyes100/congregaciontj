@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 import { verifySession, COOKIE_NAME } from './auth';
 import { getDb } from './sqlite';
 
@@ -40,4 +41,9 @@ export async function getSessionContext(): Promise<SessionContext> {
   } catch {
     return { userId: null, congreId: null, isSuperAdmin: false, email: null };
   }
+}
+
+/** Standard 401 response — use after getSessionContext() when userId is null */
+export function unauthenticated() {
+  return NextResponse.json({ error: 'No autenticado' }, { status: 401 });
 }

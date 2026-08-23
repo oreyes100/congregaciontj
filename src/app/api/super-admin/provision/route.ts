@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import { getDb } from '@/lib/sqlite';
 import { sb } from '@/lib/crud';
 
@@ -27,6 +27,7 @@ function unauthorized() {
  */
 export async function POST(request: Request) {
   const ctx = await getSessionContext();
+  if (!ctx.userId) return unauthenticated();
   if (!ctx.isSuperAdmin) return unauthorized();
 
   let body: any;

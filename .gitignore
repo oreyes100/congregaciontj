@@ -76,3 +76,7 @@ credenciales_publicadores.csv
 
 # SQLite database and exports (personal data — never commit)
 data/
+
+# PM2 config real (contiene secretos de producción)
+ecosystem.config.cjs
+ecosystem.config.cjs.bak.*

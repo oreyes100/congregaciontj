@@ -69,9 +69,11 @@ export function canAccess(me: Me | null, moduleKey: string, adminOnly?: boolean,
   if (superAdminOnly) return !!me.is_super_admin;
   if (me.is_super_admin) return true; // super-admin sees everything else
   if (adminOnly) return me.app_role === 'admin';
-  // Check congregation-level module gate
+  // Admin always has full access — congregation-level gate only restricts elders/publishers
+  if (me.app_role === 'admin') return true;
+  // Check congregation-level module gate (elder and publisher)
   if (me.enabled_modules && !me.enabled_modules.includes(moduleKey)) return false;
-  if (me.app_role === 'admin' || me.app_role === 'elder') return true;
+  if (me.app_role === 'elder') return true;
   if (moduleKey === 'my-report') return true;
   return me.permissions.includes(moduleKey);
 }

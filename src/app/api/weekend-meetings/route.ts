@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
 import { getDb } from '@/lib/sqlite';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 function userCols(alias: string, prefix: string) {
   return `${alias}.id as ${prefix}_id, ${alias}.first_name as ${prefix}_first, ${alias}.last_name as ${prefix}_last, ${alias}.display_name as ${prefix}_display, ${alias}.name as ${prefix}_name`;
@@ -15,6 +15,7 @@ function userObj(row: Record<string, unknown>, prefix: string) {
 export async function GET() {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const db = getDb();
 
     let sql = `
@@ -69,6 +70,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     const body = await request.json();
     const { date } = body;
@@ -81,10 +83,16 @@ export async function POST(request: Request) {
 
     if (error) {
       if (error.code === '23505' || error.message?.includes('UNIQUE') || error.message?.includes('duplicate')) {
+        // Same congregation already owns this week — return it so the click is idempotent.
         let q = supabase.from('weekend_meetings').select().eq('date', date);
         if (ctx.congreId) q = q.eq('congregation_id', ctx.congreId);
-        const { data: existing } = await q.single();
+        const { data: existing } = await q.maybeSingle();
         if (existing) return NextResponse.json({ meeting: existing }, { status: 200 });
+        // A collision with no row of our own means the date is still globally
+        // unique in this database — the schema migration has not been applied.
+        return NextResponse.json({
+          error: 'Esta semana está ocupada por otra congregación. La base de datos aún tiene la restricción antigua UNIQUE(date); reinicia la aplicación para aplicar la migración.',
+        }, { status: 409 });
       }
       throw error;
     }

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import type { Person } from '@/types';
 
 
@@ -25,6 +25,7 @@ const PERSON_FIELDS = [
 export async function GET(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     const { searchParams } = new URL(request.url);
     const filter = searchParams.get('filter') || 'everyone';
@@ -191,6 +192,7 @@ function applyFilter(query: any, filter: string): any {
 export async function POST(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     const body = await request.json();
 

@@ -42,5 +42,23 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export const useTheme = () => useContext(Ctx);
 
+/**
+ * Resolves the theme to the boolean actually in effect, tracking the `dark`
+ * class on <html>. Needed wherever a real value is required instead of a
+ * Tailwind `dark:` variant — e.g. styling third-party embedded content — and
+ * correct for mode='system', where `mode` alone does not tell you the answer.
+ */
+export function useIsDark(): boolean {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const read = () => setDark(document.documentElement.classList.contains('dark'));
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    return () => obs.disconnect();
+  }, []);
+  return dark;
+}
+
 // Inline script to set the class before paint (avoids flash of wrong theme)
 export const themeInitScript = `(function(){try{var m=localStorage.getItem('theme')||'system';var s=window.matchMedia('(prefers-color-scheme: dark)').matches;if(m==='dark'||(m==='system'&&s))document.documentElement.classList.add('dark');}catch(e){}})();`;

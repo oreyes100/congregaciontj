@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 
 export async function GET() {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     let query = supabase.from('public_speakers').select('*').order('congregation', { ascending: true }).order('name', { ascending: true });
     if (ctx.congreId) query = query.eq('congregation_id', ctx.congreId);
@@ -20,6 +21,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     const body = await request.json();
     const { name, congregation, city, phone, email, outline_numbers, notes } = body;

@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sb } from '@/lib/crud';
 import { getDb } from '@/lib/sqlite';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 export async function GET() {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const db = getDb();
     let sql = `SELECT t.*, u.id as user_id_ref, u.first_name, u.last_name, u.name as user_name
                FROM outgoing_talks t
@@ -27,6 +28,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const supabase = sb();
     const body = await request.json();
     const id = crypto.randomUUID();

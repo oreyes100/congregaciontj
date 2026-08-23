@@ -4,7 +4,7 @@ import { ZipArchive } from 'archiver';
 import { PassThrough } from 'stream';
 import { tablesForSections } from '@/lib/backupSections';
 import { toCsv } from '@/lib/csv';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 
 const TABLES_WITH_CONGREGATION_ID = new Set([
   'meetings', 'weekend_meetings', 'field_service_groups', 'field_service_meetings',
@@ -27,6 +27,7 @@ async function fetchAllRows(table: string, congregationId?: string | null) {
 export async function GET(request: Request) {
   try {
     const ctx = await getSessionContext();
+    if (!ctx.userId) return unauthenticated();
     const congreId = ctx.congreId && !ctx.isSuperAdmin ? ctx.congreId : null;
 
     const { searchParams } = new URL(request.url);

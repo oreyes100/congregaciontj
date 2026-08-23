@@ -50,7 +50,22 @@ export default function WeekendPage() {
       }
 
       const [mj, oj, spj, pj] = await Promise.all([mRes.json(), oRes.json(), spRes.json(), pRes.json()]);
-      setMeetings(mj.meetings || []);
+      const loaded: WeekendMeeting[] = mj.meetings || [];
+      setMeetings(loaded);
+      // Open on the current week rather than an empty dashboard.
+      setActiveId(prev => {
+        if (prev) return prev;
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() + (d.getDay() === 0 ? -6 : 1 - d.getDay())); // Monday of this week
+        const monday = d.toISOString().slice(0, 10);
+        const sunday = new Date(d.getTime() + 6 * 864e5).toISOString().slice(0, 10);
+        const match = loaded.find(m => {
+          const date = String(m.date || '').slice(0, 10);
+          return date >= monday && date <= sunday;
+        });
+        return match?.id ?? null;
+      });
       setOutlines(oj.outlines || []);
       setVisitingSpeakers(spj.speakers || []);
       setLocalPersons(pj.persons || []);

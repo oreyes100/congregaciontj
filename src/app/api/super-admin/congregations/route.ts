@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSessionContext } from '@/lib/serverContext';
+import { getSessionContext, unauthenticated } from '@/lib/serverContext';
 import { sb } from '@/lib/crud';
 
 function unauthorized() {
@@ -9,6 +9,7 @@ function unauthorized() {
 /** GET /api/super-admin/congregations — list all congregations with user counts */
 export async function GET() {
   const ctx = await getSessionContext();
+  if (!ctx.userId) return unauthenticated();
   if (!ctx.isSuperAdmin) return unauthorized();
 
   const { data: congres, error } = await sb()
@@ -36,6 +37,7 @@ export async function GET() {
 /** POST /api/super-admin/congregations — create new congregation */
 export async function POST(request: Request) {
   const ctx = await getSessionContext();
+  if (!ctx.userId) return unauthenticated();
   if (!ctx.isSuperAdmin) return unauthorized();
 
   const body = await request.json();
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
 /** PUT /api/super-admin/congregations — update congregation (name/city/enabled/modules) */
 export async function PUT(request: Request) {
   const ctx = await getSessionContext();
+  if (!ctx.userId) return unauthenticated();
   if (!ctx.isSuperAdmin) return unauthorized();
 
   const body = await request.json();
@@ -74,6 +77,7 @@ export async function PUT(request: Request) {
 /** DELETE /api/super-admin/congregations?id=... */
 export async function DELETE(request: Request) {
   const ctx = await getSessionContext();
+  if (!ctx.userId) return unauthenticated();
   if (!ctx.isSuperAdmin) return unauthorized();
 
   const { searchParams } = new URL(request.url);
