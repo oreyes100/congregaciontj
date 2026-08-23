@@ -1,0 +1,39 @@
+name: Despliegue Automatizado a VPS
+
+on:
+  push:
+    branches:
+      - vps-selfhosted
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          ref: vps-selfhosted
+
+      - name: Desplegar en VPS
+        run: |
+          ssh devops@207.248.113.8 << 'EOF'
+          cd /opt/msp
+          git fetch origin vps-selfhosted
+          git checkout vps-selfhosted
+          git pull origin vps-selfhosted
+          npm run build
+          cp -r .next/standalone/. /opt/msp/standalone/ 2>/dev/null || true
+          cp -r .next/static /opt/msp/standalone/.next/static
+          cp -r public /opt/msp/standalone/public
+          PM2=/home/devops/.npm-global/bin/pm2
+          $PM2 restart meeting-scheduler-pro --update-env
+          sleep 3
+          STATUS=$($PM2 list 2>&1 | grep meeting-scheduler-pro | grep -c "online" || echo "0")
+          if [ "$STATUS" -gt 0 ]; then
+            echo "PM2 online"
+          else
+            echo "WARN: PM2 no está online — revisar logs"
+          fi
+          HTTP=$($curl -sk --max-time 10 https://congregaciontj.duckdns.org/api/health -w "%{http_code}" -o /dev/null)
+          echo "HTTPS /api/health: $HTTP"
+          EOF
